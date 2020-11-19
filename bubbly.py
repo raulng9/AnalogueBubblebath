@@ -17,11 +17,12 @@ def findTestCircles(threshFrame):
         (x,y,width,height) = cv2.boundingRect(contour)
         aspectRatio = width/float(height)
 
-        if aspectRatio >= 0.9 and aspectRatio <= 1.1:
+        if width >= 20 and height >= 20 and aspectRatio >= 0.9 and aspectRatio <= 1.3:
             bubbleContoursFiltered.append(contour)
     print(len(bubbleContoursFiltered))
-    cv2.drawContours(threshFrame, bubbleContours, -1, (0,255,0),3)
-    cv2.imshow("th", threshFrame)
+    emptyFrame = np.zeros((len(threshFrame), len(threshFrame[0])), np.uint8)
+    cv2.drawContours(emptyFrame, bubbleContours, -1, (0,255,0),30)
+    cv2.imshow("th", emptyFrame)
 
 
 
