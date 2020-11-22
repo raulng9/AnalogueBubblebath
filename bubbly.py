@@ -18,6 +18,8 @@ questionsPerRow = None
 def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
     correctAnswers = 0
+    referenceFrameColor = cv2.cvtColor(referenceFrame, cv2.COLOR_GRAY2RGB)
+
     #print(len(questionsSortedVertical))
     questionsSortedHorizontal = None
     for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
@@ -26,17 +28,16 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
         for(j,contour) in enumerate(questionsSortedHorizontal):
             mask = np.zeros(referenceFrame.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
-            cv2.imshow("mascara", mask)
+            #cv2.imshow("mascara", mask)
 
             mask = cv2.bitwise_and(referenceFrame, referenceFrame, mask=mask)
             totalNonZero = cv2.countNonZero(mask)
-
-            #print(totalNonZero)
             if filledIn is None or totalNonZero > filledIn[0]:
                 filledIn = (totalNonZero,j)
+
         # initialize the contour color and the index of the
 	    # *correct* answer
-        color = (0, 0, 255)
+        color = (255, 0, 0)
         k = answers[q]
 
 	    # check to see if the bubbled answer is correct
@@ -45,8 +46,10 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
             correctAnswers += 1
 
 	    # draw the outline of the correct answer on the test
-        cv2.drawContours(referenceFrame, [questionsSortedHorizontal[k]], -1, color, 3)
-    cv2.imshow("ref", referenceFrame)
+        cv2.drawContours(referenceFrameColor, [questionsSortedHorizontal[k]], -1, color, 3)
+    cv2.imshow("ref", referenceFrameColor)
+    print("Number of correct answers:")
+    print(correctAnswers)
 
 
 
@@ -78,14 +81,10 @@ def getTestDetails(filename):
 
 
 
-def splitListInGroups(listToSplit, sizeOfGroups):
-    finalList = []
-    for i in range(0, len(listToSplit), sizeOfGroups):
-        yield listToSplit[i:i + sizeOfGroups]
-
-
-
-
+# def splitListInGroups(listToSplit, sizeOfGroups):
+#     finalList = []
+#     for i in range(0, len(listToSplit), sizeOfGroups):
+#         yield listToSplit[i:i + sizeOfGroups]
 
 
 #actual work
