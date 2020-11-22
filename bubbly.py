@@ -12,31 +12,41 @@ inputFromWebcam = cv2.VideoCapture(0);
 #global variables
 answers = {}
 questionsPerRow = None
-thresholdFrame = None
 
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
-def sortAndGradeAnswers(contoursOfAnswers):
+def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
+    correctAnswers = 0
     #print(len(questionsSortedVertical))
     questionsSortedHorizontal = None
     for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
         questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
         filledIn = None
         for(j,contour) in enumerate(questionsSortedHorizontal):
-            mask = np.zeros(thresholdFrame.shape, dtype="uint8")
+            mask = np.zeros(referenceFrame.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
             cv2.imshow("mascara", mask)
 
-            mask = cv2.bitwise_and(thresholdFrame, thresholdFrame, mask=mask)
+            mask = cv2.bitwise_and(referenceFrame, referenceFrame, mask=mask)
             totalNonZero = cv2.countNonZero(mask)
 
-            print(totalNonZero)
-            #if filledIn is None or totalNonZero > filledIn[0]:
-            #    filledIn = (totalNonZero,j)
-    print(len(questionsSortedHorizontal))
-    return questionsSortedHorizontal
+            #print(totalNonZero)
+            if filledIn is None or totalNonZero > filledIn[0]:
+                filledIn = (totalNonZero,j)
+        # initialize the contour color and the index of the
+	    # *correct* answer
+        color = (0, 0, 255)
+        k = answers[q]
 
+	    # check to see if the bubbled answer is correct
+        if k == filledIn[1]:
+            color = (0, 255, 0)
+            correctAnswers += 1
+
+	    # draw the outline of the correct answer on the test
+        cv2.drawContours(referenceFrame, [questionsSortedHorizontal[k]], -1, color, 3)
+    cv2.imshow("ref", referenceFrame)
 
 
 
@@ -114,21 +124,21 @@ def frameScan():
 
             #We apply the threshold to obtain the circle contours
             thresholdFrame = cv2.threshold(transformedFrame, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-            cv2.imshow("aa", thresholdFrame)
+            #cv2.imshow("aa", thresholdFrame)
             contoursOfOptions = findTestCircles(thresholdFrame)
 
             if contoursOfOptions is not None:
                 if len(contoursOfOptions) == 9:
                     #emptyFrameForRows = np.zeros((len(contourOfTest), len(contourOfTest[0])), np.uint8)
-                    questionsFullySorted = sortAndGradeAnswers(contoursOfOptions)
-                    rows = list(splitListInGroups(contoursOfOptions,3))
-                    transformedFrameToColor = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
-                    for row in rows:
-                        colorForRow = (random.randrange(0,255),random.randrange(0,255),random.randrange(0,255))
-                        cv2.drawContours(transformedFrameToColor, row, -1, colorForRow, 2)
-                        #cv2.imshow("rows separated", transformedFrameToColor)
-                        gradeAndDraw(questionsFullySorted)
-                        getTestDetails("test1.txt")
+                    questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,transformedFrame)
+                    # rows = list(splitListInGroups(contoursOfOptions,3))
+                    # transformedFrameToColor = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
+                    # for row in rows:
+                    #     colorForRow = (random.randrange(0,255),random.randrange(0,255),random.randrange(0,255))
+                    #     cv2.drawContours(transformedFrameToColor, row, -1, colorForRow, 2)
+                    #     #cv2.imshow("rows separated", transformedFrameToColor)
+                    #     gradeAndDraw(questionsFullySorted)
+                    #     getTestDetails("test1.txt")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
