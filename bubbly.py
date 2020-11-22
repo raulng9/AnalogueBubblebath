@@ -15,16 +15,15 @@ questionsPerRow = None
 
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
-def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
+def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
     correctAnswers = 0
-    referenceFrameColor = cv2.cvtColor(referenceFrame, cv2.COLOR_GRAY2RGB)
+    originalFrameColor = cv2.cvtColor(originalFrame, cv2.COLOR_GRAY2RGB)
 
-    #print(len(questionsSortedVertical))
-    questionsSortedHorizontal = None
     for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
         questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
         filledIn = None
+
         for(j,contour) in enumerate(questionsSortedHorizontal):
             mask = np.zeros(referenceFrame.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
@@ -32,6 +31,8 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
 
             mask = cv2.bitwise_and(referenceFrame, referenceFrame, mask=mask)
             totalNonZero = cv2.countNonZero(mask)
+            print(totalNonZero)
+
             if filledIn is None or totalNonZero > filledIn[0]:
                 filledIn = (totalNonZero,j)
 
@@ -46,8 +47,8 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame):
             correctAnswers += 1
 
 	    # draw the outline of the correct answer on the test
-        cv2.drawContours(referenceFrameColor, [questionsSortedHorizontal[k]], -1, color, 3)
-    cv2.imshow("ref", referenceFrameColor)
+        cv2.drawContours(originalFrameColor, [questionsSortedHorizontal[k]], -1, color, 3)
+    cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
 
@@ -129,7 +130,7 @@ def frameScan():
             if contoursOfOptions is not None:
                 if len(contoursOfOptions) == 9:
                     #emptyFrameForRows = np.zeros((len(contourOfTest), len(contourOfTest[0])), np.uint8)
-                    questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,transformedFrame)
+                    questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
                     # rows = list(splitListInGroups(contoursOfOptions,3))
                     # transformedFrameToColor = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
                     # for row in rows:
