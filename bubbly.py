@@ -23,7 +23,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
     for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
         questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
         filledIn = None
-
+        contoursFilled = []
         for(j,contour) in enumerate(questionsSortedHorizontal):
             mask = np.zeros(referenceFrame.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
@@ -31,10 +31,10 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
             mask = cv2.bitwise_and(referenceFrame, referenceFrame, mask=mask)
             totalNonZero = cv2.countNonZero(mask)
-            print(totalNonZero)
 
             if filledIn is None or totalNonZero > filledIn[0]:
                 filledIn = (totalNonZero,j)
+                contoursFilled.append(contour)
 
         # initialize the contour color and the index of the
 	    # *correct* answer
@@ -46,8 +46,10 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
             color = (0, 255, 0)
             correctAnswers += 1
 
+        if filledIn[1]:
+
 	    # draw the outline of the correct answer on the test
-        cv2.drawContours(originalFrameColor, [questionsSortedHorizontal[k]], -1, color, 3)
+        cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
     cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
@@ -80,12 +82,6 @@ def getTestDetails(filename):
         answers[i]=listOfMappedData[i+1]
     print(answers)
 
-
-
-# def splitListInGroups(listToSplit, sizeOfGroups):
-#     finalList = []
-#     for i in range(0, len(listToSplit), sizeOfGroups):
-#         yield listToSplit[i:i + sizeOfGroups]
 
 
 #actual work
@@ -129,16 +125,7 @@ def frameScan():
 
             if contoursOfOptions is not None:
                 if len(contoursOfOptions) == 9:
-                    #emptyFrameForRows = np.zeros((len(contourOfTest), len(contourOfTest[0])), np.uint8)
                     questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
-                    # rows = list(splitListInGroups(contoursOfOptions,3))
-                    # transformedFrameToColor = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
-                    # for row in rows:
-                    #     colorForRow = (random.randrange(0,255),random.randrange(0,255),random.randrange(0,255))
-                    #     cv2.drawContours(transformedFrameToColor, row, -1, colorForRow, 2)
-                    #     #cv2.imshow("rows separated", transformedFrameToColor)
-                    #     gradeAndDraw(questionsFullySorted)
-                    #     getTestDetails("test1.txt")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
