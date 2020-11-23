@@ -24,6 +24,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
         questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
         filledIn = None
         contoursFilled = []
+        contourForIteration = None
         for(j,contour) in enumerate(questionsSortedHorizontal):
             mask = np.zeros(referenceFrame.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
@@ -34,11 +35,13 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
             if filledIn is None or totalNonZero > filledIn[0]:
                 filledIn = (totalNonZero,j)
-                contoursFilled.append(contour)
+                contourForIteration = contour
+
+        contoursFilled.append(contourForIteration)
 
         # initialize the contour color and the index of the
 	    # *correct* answer
-        color = (255, 0, 0)
+        color = (0, 0, 255)
         k = answers[q]
 
 	    # check to see if the bubbled answer is correct
@@ -46,7 +49,6 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
             color = (0, 255, 0)
             correctAnswers += 1
 
-        if filledIn[1]:
 
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
