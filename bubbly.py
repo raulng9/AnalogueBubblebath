@@ -6,6 +6,8 @@ from imutils.perspective import four_point_transform
 import imutils
 import random
 import sys
+import pytesseract
+from pytesseract import Output
 
 inputFromWebcam = cv2.VideoCapture(0);
 
@@ -52,9 +54,10 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
-    cv2.imshow("ref", originalFrameColor)
+    #cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
+    showExamInformation(correctAnswers, originalFrameColor)
 
 
 
@@ -83,6 +86,16 @@ def getTestDetails(filename):
     for i in range(0,len(listOfMappedData)-1):
         answers[i]=listOfMappedData[i+1]
     print(answers)
+
+
+def showExamInformation(correctAnswers, finalFrame):
+    finalScore = correctAnswers/len(answers)
+    testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
+    cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (int(testSheetWidth/5), 30),
+    	cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+    cv2.imshow("Test results", finalFrame)
+    custom_config_tesseract = r'--oem 3 --psm 6'
+    print(pytesseract.image_to_string(finalFrame, config=custom_config_tesseract))
 
 
 
