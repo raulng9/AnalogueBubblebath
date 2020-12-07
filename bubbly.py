@@ -51,7 +51,6 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
             color = (0, 255, 0)
             correctAnswers += 1
 
-
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
     #cv2.imshow("ref", originalFrameColor)
@@ -94,8 +93,7 @@ def showExamInformation(correctAnswers, finalFrame):
     cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (int(testSheetWidth/5), 30),
     	cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
     #cv2.imshow("Test results", finalFrame)
-    custom_config_tesseract = r'--oem 3 --psm 6'
-    print(pytesseract.image_to_string(finalFrame, config=custom_config_tesseract))
+
 
 def findNameContour(transformedFrame):
     #Image treatment until edges
@@ -107,28 +105,38 @@ def findNameContour(transformedFrame):
     contoursSecondPass = imutils.grab_contours(contoursSecondPass)
 
     contourOfName = None
-    transformedFrame = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
+    #transformedFrame = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(transformedFrame, contoursSecondPass, -1, (0,255,0),3)
-    #cv2.imshow("jejej", transformedFrame)
 
     if len(contoursSecondPass) > 0:
         contoursSorted = sorted(contoursSecondPass, key=cv2.contourArea, reverse=True)
-        print("len")
-        print(len(contoursSorted))
+        #print("len")
+        #print(len(contoursSorted))
         for cont in contoursSorted:
             #Now we look for the biggest four corner polygon
             perimeter = cv2.arcLength(cont, True)
             approximatedPoly = cv2.approxPolyDP(cont, 0.02 * perimeter, True)
             if len(approximatedPoly) == 4:
                 contourOfName = approximatedPoly
-                print("app i got it")
                 break
-
         if contourOfName is not None:
-         cv2.drawContours(transformedFrame, contourOfName, -1, (0,255,0),3)
-         cv2.imshow("ajaja", transformedFrame)
-         print("got here my man")
+            cv2.drawContours(transformedFrame, contourOfName, -1, (0,255,0),3)
+            #cv2.imshow("cuadroDeNombre", transformedFrame)
+            #print(transformedFrame.shape)
+            #print(contourOfName[1])
+            heightOfCropBR = transformedFrame.shape[1]
+            widthOfCropBR = transformedFrame.shape[0]
+            bottomRightCoord = [heightOfCropBR,widthOfCropBR]
+            #we pull out the top left coordinate
+            topLeftCoord = contourOfName[2][0].tolist()
+            #actual cropping by slicing the frame from corner to corner (y coords go first (!))
+            frameWithoutNameBox = transformedFrame[topLeftCoord[1]:bottomRightCoord[1], topLeftCoord[0]:bottomRightCoord[0]]
+            if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
+                a = 1
+                #cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
 
+        custom_config_tesseract = r'--oem 3 --psm 6'
+        print(pytesseract.image_to_string(transformedFrame, config=custom_config_tesseract))
 #actual work
 def frameScan():
     while(True):
@@ -147,6 +155,8 @@ def frameScan():
         contoursOfOptions = None
         transformedFrame = None
 
+        findNameContour(frame)
+
         if len(contoursFirstPass) > 0:
             contoursSorted = sorted(contoursFirstPass, key=cv2.contourArea, reverse=True)
             for cont in contoursSorted:
@@ -164,7 +174,7 @@ def frameScan():
             testFrame = four_point_transform(frame, contourOfTest.reshape(4,2))
             transformedFrame = four_point_transform(greyFrame, contourOfTest.reshape(4,2))
 
-            findNameContour(transformedFrame)
+            #findNameContour(transformedFrame)
 
             #We apply the threshold to obtain the circle contours
             thresholdFrame = cv2.threshold(transformedFrame, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
