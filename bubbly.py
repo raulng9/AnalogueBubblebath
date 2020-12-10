@@ -121,22 +121,30 @@ def findNameContour(transformedFrame):
                 break
         if contourOfName is not None:
             cv2.drawContours(transformedFrame, contourOfName, -1, (0,255,0),3)
-            #cv2.imshow("cuadroDeNombre", transformedFrame)
-            #print(transformedFrame.shape)
-            #print(contourOfName[1])
             heightOfCropBR = transformedFrame.shape[1]
             widthOfCropBR = transformedFrame.shape[0]
-            bottomRightCoord = [heightOfCropBR,widthOfCropBR]
+            bottomRightCoordName = [heightOfCropBR,widthOfCropBR]
             #we pull out the top left coordinate
-            topLeftCoord = contourOfName[2][0].tolist()
-            #actual cropping by slicing the frame from corner to corner (y coords go first (!))
-            frameWithoutNameBox = transformedFrame[topLeftCoord[1]:bottomRightCoord[1], topLeftCoord[0]:bottomRightCoord[0]]
+            topLeftCoordName = contourOfName[1][0].tolist()
+            topLeftCoordNoName= [0,0]
+            bottomRightCoordNoName = contourOfName[0][0].tolist()
+            coordsWithName = [topLeftCoordName, bottomRightCoordName]
+            print("---------")
+            #the actual cropping done by slicing the frame from corner to corner (y coords go first (!))
+            frameNameBox = transformedFrame[topLeftCoordName[1]:bottomRightCoordName[1], topLeftCoordName[0]:bottomRightCoordName[0]]
+            frameWithoutNameBox = transformedFrame[topLeftCoordNoName[1]:bottomRightCoordNoName[1], topLeftCoordNoName[0]:bottomRightCoordNoName[0]]
+            if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
+                a = 1
+                #cv2.imshow("cuadroDeNombre", frameNameBox)
+
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
-                #cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
+                print("name")
+                cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
 
         custom_config_tesseract = r'--oem 3 --psm 6'
-        print(pytesseract.image_to_string(transformedFrame, config=custom_config_tesseract))
+        #print(pytesseract.image_to_string(frameOnlyNameBox, config=custom_config_tesseract))
+
 #actual work
 def frameScan():
     while(True):
