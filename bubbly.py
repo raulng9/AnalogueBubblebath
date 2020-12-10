@@ -123,12 +123,14 @@ def findNameContour(transformedFrame):
             cv2.drawContours(transformedFrame, contourOfName, -1, (0,255,0),3)
             heightOfCropBR = transformedFrame.shape[1]
             widthOfCropBR = transformedFrame.shape[0]
-            bottomRightCoordName = [heightOfCropBR,widthOfCropBR]
+            #bottomRightCoordName = [heightOfCropBR,widthOfCropBR]
             #we pull out the top left coordinate
             topLeftCoordName = contourOfName[1][0].tolist()
+            bottomRightCoordName = contourOfName[3][0].tolist()
+
             topLeftCoordNoName= [0,0]
             bottomRightCoordNoName = contourOfName[0][0].tolist()
-            coordsWithName = [topLeftCoordName, bottomRightCoordName]
+            #coordsWithName = [topLeftCoordName, bottomRightCoordName]
             print("---------")
             #the actual cropping done by slicing the frame from corner to corner (y coords go first (!))
             frameNameBox = transformedFrame[topLeftCoordName[1]:bottomRightCoordName[1], topLeftCoordName[0]:bottomRightCoordName[0]]
@@ -139,7 +141,6 @@ def findNameContour(transformedFrame):
 
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
-                print("name")
                 cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
 
         custom_config_tesseract = r'--oem 3 --psm 6'
