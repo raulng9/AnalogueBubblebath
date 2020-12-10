@@ -138,13 +138,15 @@ def findNameContour(transformedFrame):
             if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
                 a = 1
                 #cv2.imshow("cuadroDeNombre", frameNameBox)
-
+                frameNameBox = cv2.rotate(frameNameBox,cv2.ROTATE_180)
+                custom_config_tesseract = r'--oem 3 --psm 6'
+                print(pytesseract.image_to_string(frameNameBox, config=custom_config_tesseract))
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
+                frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
                 cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
 
-        custom_config_tesseract = r'--oem 3 --psm 6'
-        #print(pytesseract.image_to_string(frameOnlyNameBox, config=custom_config_tesseract))
+
 
 #actual work
 def frameScan():
