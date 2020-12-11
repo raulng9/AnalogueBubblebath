@@ -128,35 +128,40 @@ def findNameContour(transformedFrame):
             #we pull out the top left coordinate
             topLeftCoordName = contourOfName[1][0].tolist()
             bottomRightCoordName = contourOfName[3][0].tolist()
-            print([topLeftCoordName, bottomRightCoordName])
+            #print([topLeftCoordName, bottomRightCoordName])
 
-            topLeftExtra = [topLeftCoordName[0]+80, topLeftCoordName[1]]
+            topLeftExtra = [topLeftCoordName[0]+50, topLeftCoordName[1]]
             bottomRightExtra = [bottomRightCoordName[0]-30,bottomRightCoordName[1]]
 
-            topLeftCoordNoName= [0,0]
-            bottomRightCoordNoName = contourOfName[0][0].tolist()
-            #coordsWithName = [topLeftCoordName, bottomRightCoordName]
+            topLeftCoordNoName= contourOfName[2][0].tolist()
+            bottomRightCoordNoName = [heightOfCropBR,widthOfCropBR]
+
             print("----------")
+
             #the actual cropping done by slicing the frame from corner to corner (y coords go first (!))
             frameNameBox = transformedFrame[topLeftCoordName[1]:bottomRightCoordName[1], topLeftCoordName[0]:bottomRightCoordName[0]]
             frameNameBoxExtra = transformedFrame[topLeftExtra[1]:bottomRightExtra[1], topLeftExtra[0]:bottomRightExtra[0]]
+
+
             frameWithoutNameBox = transformedFrame[topLeftCoordNoName[1]:bottomRightCoordNoName[1], topLeftCoordNoName[0]:bottomRightCoordNoName[0]]
+
+
             if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
                 a = 1
                 frameNameBox = cv2.rotate(frameNameBox,cv2.ROTATE_180)
                 #cv2.imshow("cuadroDeNombre", frameNameBox)
                 custom_config_tesseract = r'--oem 3 --psm 6'
-                #print(pytesseract.image_to_string(frameNameBox, config=custom_config_tesseract))
+                print(pytesseract.image_to_string(frameNameBox, config=custom_config_tesseract))
             if frameNameBoxExtra.shape[0] > 0 and frameNameBoxExtra.shape[1] > 0:
                 a = 1
-                frameNameBoxExtra = cv2.rotate(frameNameBoxExtra,cv2.ROTATE_180)
-                cv2.imshow("cuadroDeNombre", frameNameBoxExtra)
+                #frameNameBoxExtra = cv2.rotate(frameNameBoxExtra,cv2.ROTATE_180)
+                #cv2.imshow("cuadroDeNombre", frameNameBoxExtra)
                 custom_config_tesseract = r'--oem 3 --psm 6'
                 print(pytesseract.image_to_string(frameNameBoxExtra, config=custom_config_tesseract))
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
-                frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
-                #cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
+                #frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
+                cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
 
 
 
