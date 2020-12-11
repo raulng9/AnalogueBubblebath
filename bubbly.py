@@ -53,7 +53,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
-    #cv2.imshow("ref", originalFrameColor)
+    cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
     showExamInformation(correctAnswers, originalFrameColor)
@@ -142,9 +142,7 @@ def findNameContour(transformedFrame):
             frameNameBox = transformedFrame[topLeftCoordName[1]:bottomRightCoordName[1], topLeftCoordName[0]:bottomRightCoordName[0]]
             frameNameBoxExtra = transformedFrame[topLeftExtra[1]:bottomRightExtra[1], topLeftExtra[0]:bottomRightExtra[0]]
 
-
             frameWithoutNameBox = transformedFrame[topLeftCoordNoName[1]:bottomRightCoordNoName[1], topLeftCoordNoName[0]:bottomRightCoordNoName[0]]
-
 
             if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
                 a = 1
@@ -161,8 +159,16 @@ def findNameContour(transformedFrame):
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
                 #frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
-                cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
-
+                #cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
+                frameWithoutNameBox = cv2.cvtColor(frameWithoutNameBox, cv2.COLOR_BGR2GRAY)
+                #We apply the threshold to obtain the circle contours
+                frameWithoutNameBox = cv2.threshold(frameWithoutNameBox, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+                #cv2.imshow("aa", thresholdFrame)
+                contoursOfOptions = findTestCircles(frameWithoutNameBox)
+                if contoursOfOptions is not None:
+                    if len(contoursOfOptions) == 9:
+                        print("All answers detected")
+                        questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,frameWithoutNameBox, frameWithoutNameBox)
 
 
 #actual work
@@ -211,7 +217,8 @@ def frameScan():
 
             if contoursOfOptions is not None:
                 if len(contoursOfOptions) == 9:
-                    questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
+                    a = 2
+                    #questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
