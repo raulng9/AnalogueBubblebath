@@ -110,6 +110,15 @@ def truncate(number, decimals=0):
     factor = 10.0 ** decimals
     return math.trunc(number * factor) / factor
 
+def load_student_image():
+    pathForStudent = "StudentPictures/" + currentStudent + ".jpg"
+    studentImg = cv2.imread(pathForStudent, cv2.IMREAD_UNCHANGED)
+    #cv2.imshow("stu",studentImg)
+    width = 100
+    height = 100
+    dim = (width, height)
+    resizedImg = cv2.resize(studentImg, dim, interpolation = cv2.INTER_AREA)
+    cv2.imshow("emma", resizedImg)
 
 def showExamInformation(correctAnswers, finalFrame):
     global answersFrame
@@ -119,7 +128,8 @@ def showExamInformation(correctAnswers, finalFrame):
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
     if currentStudent != "":
         cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (int(testSheetWidth/5)-30, 30),
-    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+        load_student_image()
     answersFrame = finalFrame
     cv2.imshow("Test results", finalFrame)
 
