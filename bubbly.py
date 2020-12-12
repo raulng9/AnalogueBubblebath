@@ -21,9 +21,13 @@ listOfStudents = []
 currentStudent = ""
 averageForCurrentStudent = 0
 
+answersFrame = None
+currentCorrectAnswers = None
+
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
 def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
+    global currentCorrectAnswers
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
     correctAnswers = 0
     originalFrameColor = cv2.cvtColor(originalFrame, cv2.COLOR_GRAY2RGB)
@@ -62,6 +66,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
     #cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
+    currentCorrectAnswers = correctAnswers
     showExamInformation(correctAnswers, originalFrameColor)
 
 
@@ -107,16 +112,21 @@ def truncate(number, decimals=0):
 
 
 def showExamInformation(correctAnswers, finalFrame):
+    global answersFrame
     finalScore = correctAnswers/len(answers)
     testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
-    cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (int(testSheetWidth/5), 30),
+    cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (20,int(testSheetHeight)-100),
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
-    cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (0,0),
-    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=True)
+    if currentStudent != "":
+        cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (int(testSheetWidth/5)-30, 30),
+    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+    answersFrame = finalFrame
     cv2.imshow("Test results", finalFrame)
 
 
 def findNameContour(transformedFrame):
+    if currentStudent != "":
+        return
     #transformedFrame = cv2.rotate(transformedFrame, cv2.ROTATE_180)
     #Image treatment until edges
     blurSheetFrame = cv2.GaussianBlur(transformedFrame,(5,5),0)
@@ -201,7 +211,7 @@ def check_for_student(studentName):
         if student.name == studentName:
             currentStudent = student.name
             averageForCurrentStudent = sum(student.listOfMarks)/len(student.listOfMarks)
-
+            showExamInformation(currentCorrectAnswers, answersFrame)
 #actual work
 def frameScan():
     while(True):
@@ -222,34 +232,34 @@ def frameScan():
 
         findNameContour(frame)
 
-        if len(contoursFirstPass) > 0:
-            contoursSorted = sorted(contoursFirstPass, key=cv2.contourArea, reverse=True)
-            for cont in contoursSorted:
-                #Now we look for the biggest four corner polygon
-                perimeter = cv2.arcLength(cont, True)
-                approximatedPoly = cv2.approxPolyDP(cont, 0.02 * perimeter, True)
-                if len(approximatedPoly) == 4:
-                    contourOfTest = approximatedPoly
-                    break
-
-        if contourOfTest is not None:
-
-            cv2.drawContours(frame, contourOfTest, -1, (0,255,0),3)
-            #Perspective transform to isolate the test document
-            testFrame = four_point_transform(frame, contourOfTest.reshape(4,2))
-            transformedFrame = four_point_transform(greyFrame, contourOfTest.reshape(4,2))
-
-            #findNameContour(transformedFrame)
-
-            #We apply the threshold to obtain the circle contours
-            thresholdFrame = cv2.threshold(transformedFrame, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-            #cv2.imshow("aa", thresholdFrame)
-            contoursOfOptions = findTestCircles(thresholdFrame)
-
-            if contoursOfOptions is not None:
-                if len(contoursOfOptions) == 9:
-                    a = 2
-                    #questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
+        # if len(contoursFirstPass) > 0:
+        #     contoursSorted = sorted(contoursFirstPass, key=cv2.contourArea, reverse=True)
+        #     for cont in contoursSorted:
+        #         #Now we look for the biggest four corner polygon
+        #         perimeter = cv2.arcLength(cont, True)
+        #         approximatedPoly = cv2.approxPolyDP(cont, 0.02 * perimeter, True)
+        #         if len(approximatedPoly) == 4:
+        #             contourOfTest = approximatedPoly
+        #             break
+        #
+        # if contourOfTest is not None:
+        #
+        #     cv2.drawContours(frame, contourOfTest, -1, (0,255,0),3)
+        #     #Perspective transform to isolate the test document
+        #     testFrame = four_point_transform(frame, contourOfTest.reshape(4,2))
+        #     transformedFrame = four_point_transform(greyFrame, contourOfTest.reshape(4,2))
+        #
+        #     #findNameContour(transformedFrame)
+        #
+        #     #We apply the threshold to obtain the circle contours
+        #     thresholdFrame = cv2.threshold(transformedFrame, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+        #     #cv2.imshow("aa", thresholdFrame)
+        #     contoursOfOptions = findTestCircles(thresholdFrame)
+        #
+        #     if contoursOfOptions is not None:
+        #         if len(contoursOfOptions) == 9:
+        #             a = 2
+        #             #questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,thresholdFrame, transformedFrame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
