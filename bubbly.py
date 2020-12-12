@@ -6,6 +6,7 @@ from imutils.perspective import four_point_transform
 import imutils
 import random
 import sys
+import math
 import pytesseract
 from pytesseract import Output
 import data_retriever
@@ -17,7 +18,8 @@ inputFromWebcam = cv2.VideoCapture(0);
 answers = {}
 questionsPerRow = None
 listOfStudents = []
-
+currentStudent = ""
+averageForCurrentStudent = 0
 
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
@@ -89,12 +91,28 @@ def getTestDetails(filename):
         answers[i]=listOfMappedData[i+1]
     print(answers)
 
+def truncate(number, decimals=0):
+    """
+    Returns a value truncated to a specific number of decimal places.
+    """
+    if not isinstance(decimals, int):
+        raise TypeError("decimal places must be an integer.")
+    elif decimals < 0:
+        raise ValueError("decimal places has to be 0 or more.")
+    elif decimals == 0:
+        return math.trunc(number)
+
+    factor = 10.0 ** decimals
+    return math.trunc(number * factor) / factor
+
 
 def showExamInformation(correctAnswers, finalFrame):
     finalScore = correctAnswers/len(answers)
     testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
     cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (int(testSheetWidth/5), 30),
-    	cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
+    cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (0,0),
+    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=True)
     cv2.imshow("Test results", finalFrame)
 
 
@@ -162,7 +180,6 @@ def findNameContour(transformedFrame):
                 alphaNameFound = ''.join(filter(str.isalpha, nameFoundOCR))
                 check_for_student(alphaNameFound)
                 print(alphaNameFound)
-                print("should be here")
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
                 #frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
@@ -178,14 +195,12 @@ def findNameContour(transformedFrame):
 
 
 def check_for_student(studentName):
-    print("yes here")
+    global currentStudent
+    global averageForCurrentStudent
     for student in listOfStudents:
-        print("checked for them")
-        print(student.name)
         if student.name == studentName:
-            print("Found student")
-            print(student.listOfMarks)
-
+            currentStudent = student.name
+            averageForCurrentStudent = sum(student.listOfMarks)/len(student.listOfMarks)
 
 #actual work
 def frameScan():
@@ -240,6 +255,7 @@ def frameScan():
             break
 
 def main():
+    global listOfStudents
     getTestDetails(sys.argv[1])
     listOfStudents = retrieve_students()
     frameScan()
