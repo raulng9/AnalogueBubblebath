@@ -8,12 +8,16 @@ import random
 import sys
 import pytesseract
 from pytesseract import Output
-
+import data_retriever
+from data_retriever import Student
+from data_retriever import retrieve_students
 inputFromWebcam = cv2.VideoCapture(0);
 
 #global variables
 answers = {}
 questionsPerRow = None
+listOfStudents = []
+
 
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
@@ -53,7 +57,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
-    cv2.imshow("ref", originalFrameColor)
+    #cv2.imshow("ref", originalFrameColor)
     print("Number of correct answers:")
     print(correctAnswers)
     showExamInformation(correctAnswers, originalFrameColor)
@@ -68,7 +72,6 @@ def findTestCircles(threshFrame):
     for contour in bubbleContours:
         (x,y,width,height) = cv2.boundingRect(contour)
         aspectRatio = width/float(height)
-
         if width >= 20 and height >= 20 and aspectRatio >= 0.9 and aspectRatio <= 1.3:
             bubbleContoursFiltered.append(contour)
 
@@ -92,7 +95,7 @@ def showExamInformation(correctAnswers, finalFrame):
     testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
     cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (int(testSheetWidth/5), 30),
     	cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
-    #cv2.imshow("Test results", finalFrame)
+    cv2.imshow("Test results", finalFrame)
 
 
 def findNameContour(transformedFrame):
@@ -144,18 +147,22 @@ def findNameContour(transformedFrame):
 
             frameWithoutNameBox = transformedFrame[topLeftCoordNoName[1]:bottomRightCoordNoName[1], topLeftCoordNoName[0]:bottomRightCoordNoName[0]]
 
-            if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
-                a = 1
-                frameNameBox = cv2.rotate(frameNameBox,cv2.ROTATE_180)
-                #cv2.imshow("cuadroDeNombre", frameNameBox)
-                custom_config_tesseract = r'--oem 3 --psm 6'
-                print(pytesseract.image_to_string(frameNameBox, config=custom_config_tesseract))
+            # if frameNameBox.shape[0] > 0 and frameNameBox.shape[1] > 0:
+            #     a = 1
+            #     frameNameBox = cv2.rotate(frameNameBox,cv2.ROTATE_180)
+            #     #cv2.imshow("cuadroDeNombre", frameNameBox)
+            #     custom_config_tesseract = r'--oem 3 --psm 6'
+            #     #print(pytesseract.image_to_string(frameNameBox, config=custom_config_tesseract))
             if frameNameBoxExtra.shape[0] > 0 and frameNameBoxExtra.shape[1] > 0:
                 a = 1
                 #frameNameBoxExtra = cv2.rotate(frameNameBoxExtra,cv2.ROTATE_180)
                 #cv2.imshow("cuadroDeNombre", frameNameBoxExtra)
                 custom_config_tesseract = r'--oem 3 --psm 6'
-                print(pytesseract.image_to_string(frameNameBoxExtra, config=custom_config_tesseract))
+                nameFoundOCR = pytesseract.image_to_string(frameNameBoxExtra, config=custom_config_tesseract)
+                alphaNameFound = ''.join(filter(str.isalpha, nameFoundOCR))
+                check_for_student(alphaNameFound)
+                print(alphaNameFound)
+                print("should be here")
             if frameWithoutNameBox.shape[0] > 0 and frameWithoutNameBox.shape[1] > 0:
                 a = 1
                 #frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
@@ -167,8 +174,17 @@ def findNameContour(transformedFrame):
                 contoursOfOptions = findTestCircles(frameWithoutNameBox)
                 if contoursOfOptions is not None:
                     if len(contoursOfOptions) == 9:
-                        print("All answers detected")
                         questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,frameWithoutNameBox, frameWithoutNameBox)
+
+
+def check_for_student(studentName):
+    print("yes here")
+    for student in listOfStudents:
+        print("checked for them")
+        print(student.name)
+        if student.name == studentName:
+            print("Found student")
+            print(student.listOfMarks)
 
 
 #actual work
@@ -224,10 +240,11 @@ def frameScan():
             break
 
 def main():
+    getTestDetails(sys.argv[1])
+    listOfStudents = retrieve_students()
     frameScan()
 
 if __name__ == "__main__":
-    getTestDetails(sys.argv[1])
     main()
 
 inputFromWebcam.release()
