@@ -30,19 +30,20 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
     global currentCorrectAnswers
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
     correctAnswers = 0
-    originalFrameColor = cv2.cvtColor(originalFrame, cv2.COLOR_GRAY2RGB)
-
+    #originalFrameColor = cv2.cvtColor(originalFrame, cv2.COLOR_GRAY2RGB)
+    originalFrameForMask = cv2.cvtColor(referenceFrame, cv2.COLOR_BGR2GRAY)
+    originalFrameForMask = cv2.threshold(originalFrameForMask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
     for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
         questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
         filledIn = None
         contoursFilled = []
         contourForIteration = None
         for(j,contour) in enumerate(questionsSortedHorizontal):
-            mask = np.zeros(referenceFrame.shape, dtype="uint8")
+            mask = np.zeros(originalFrameForMask.shape, dtype="uint8")
             cv2.drawContours(mask, [contour], -1, 255, -1)
             #cv2.imshow("mascara", mask)
 
-            mask = cv2.bitwise_and(referenceFrame, referenceFrame, mask=mask)
+            mask = cv2.bitwise_and(originalFrameForMask, originalFrameForMask, mask=mask)
             totalNonZero = cv2.countNonZero(mask)
 
             if filledIn is None or totalNonZero > filledIn[0]:
@@ -50,7 +51,6 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
                 contourForIteration = contour
 
         contoursFilled.append(contourForIteration)
-
         # initialize the contour color and the index of the
 	    # *correct* answer
         color = (0, 0, 255)
@@ -62,12 +62,12 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
             correctAnswers += 1
 
 	    # draw the outline of the correct answer on the test
-        cv2.drawContours(originalFrameColor, contoursFilled, -1, color, 3)
+        cv2.drawContours(originalFrame, contoursFilled, -1, color, 3)
     #cv2.imshow("ref", originalFrameColor)
-    print("Number of correct answers:")
-    print(correctAnswers)
+    #print("Number of correct answers:")
+    #print(correctAnswers)
     currentCorrectAnswers = correctAnswers
-    showExamInformation(correctAnswers, originalFrameColor)
+    showExamInformation(correctAnswers, originalFrame)
 
 
 
@@ -148,7 +148,7 @@ def findNameContour(transformedFrame):
 
     contourOfName = None
     #transformedFrame = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
-    cv2.drawContours(transformedFrame, contoursSecondPass, -1, (0,255,0),3)
+    #cv2.drawContours(transformedFrame, contoursSecondPass, -1, (0,255,0),3)
 
     if len(contoursSecondPass) > 0:
         contoursSorted = sorted(contoursSecondPass, key=cv2.contourArea, reverse=True)
@@ -204,6 +204,8 @@ def findNameContour(transformedFrame):
                 a = 1
                 #frameWithoutNameBox = cv2.rotate(frameWithoutNameBox,cv2.ROTATE_180)
                 #cv2.imshow("cuadroDeNombre", frameWithoutNameBox)
+                frameWithoutNameBoxColor = frameWithoutNameBox.copy()
+                frameWithoutNameBoxColorCopy = frameWithoutNameBoxColor.copy()
                 frameWithoutNameBox = cv2.cvtColor(frameWithoutNameBox, cv2.COLOR_BGR2GRAY)
                 #We apply the threshold to obtain the circle contours
                 frameWithoutNameBox = cv2.threshold(frameWithoutNameBox, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
@@ -211,7 +213,7 @@ def findNameContour(transformedFrame):
                 contoursOfOptions = findTestCircles(frameWithoutNameBox)
                 if contoursOfOptions is not None:
                     if len(contoursOfOptions) == 9:
-                        questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,frameWithoutNameBox, frameWithoutNameBox)
+                        questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,frameWithoutNameBoxColor, frameWithoutNameBoxColorCopy)
 
 
 def check_for_student(studentName):
