@@ -64,7 +64,7 @@ def sortAndGradeAnswers(contoursOfAnswers, referenceFrame, originalFrame):
 
 	    # draw the outline of the correct answer on the test
         cv2.drawContours(originalFrame, contoursFilled, -1, color, 3)
-    #cv2.imshow("ref", originalFrameColor)
+    #cv2.imshow("ref", originalFrame)
     #print("Number of correct answers:")
     #print(correctAnswers)
     currentCorrectAnswers = correctAnswers
@@ -98,13 +98,10 @@ def getTestDetails(filename):
     print(answers)
 
 def truncate(number, decimals=0):
-    """
-    Returns a value truncated to a specific number of decimal places.
-    """
     if not isinstance(decimals, int):
-        raise TypeError("decimal places must be an integer.")
+        raise TypeError("needs to be an int")
     elif decimals < 0:
-        raise ValueError("decimal places has to be 0 or more.")
+        raise ValueError("must be 0 or positive")
     elif decimals == 0:
         return math.trunc(number)
 
@@ -124,24 +121,26 @@ def load_student_image():
     #cv2.imshow("emma", resizedImg)
 
 def display_student_image():
-    print(answersFrame.shape)
     x_offset=y_offset=10
     answersFrame[y_offset:y_offset+studentImageForDisplay.shape[0], x_offset:x_offset+studentImageForDisplay.shape[1]] = studentImageForDisplay
     cv2.destroyWindow("Test results")
-    cv2.imshow("yea mon", answersFrame)
-
-
+    cv2.imshow("Results and student", answersFrame)
 
 def showExamInformation(correctAnswers, finalFrame):
     global answersFrame
-    finalScore = correctAnswers/len(answers)*100
+    if finalFrame is None:
+        return
+    finalScore = 0
+    if correctAnswers != None:
+        finalScore = correctAnswers/len(answers)*100
     testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
-    cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (20,int(testSheetHeight)-100),
+    cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (20,int(testSheetHeight)-200),
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
     if currentStudent != "":
         cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (int(testSheetWidth/5)+30, 30),
         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
         load_student_image()
+        answersFrame = finalFrame
         display_student_image()
     else:
         cv2.imshow("Test results", finalFrame)
@@ -149,21 +148,20 @@ def showExamInformation(correctAnswers, finalFrame):
 
 
 def findNameContour(transformedFrame):
-    if currentStudent != "":
+    if currentStudent != "" and answersFrame is not None:
         return
     #transformedFrame = cv2.rotate(transformedFrame, cv2.ROTATE_180)
     #Image treatment until edges
     blurSheetFrame = cv2.GaussianBlur(transformedFrame,(5,5),0)
     edgesSheetFrame = cv2.Canny(blurSheetFrame, 75,200)
-
+    #cv2.imshow("edgesFrame", edgesSheetFrame)
     #Contour treatment
     contoursSecondPass = cv2.findContours(edgesSheetFrame.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contoursSecondPass = imutils.grab_contours(contoursSecondPass)
 
     contourOfName = None
-    #transformedFrame = cv2.cvtColor(transformedFrame, cv2.COLOR_GRAY2RGB)
-    #cv2.drawContours(transformedFrame, contoursSecondPass, -1, (0,255,0),3)
-
+    #cv2.drawContours(transformedFrame, contoursSecondPass, -1, (255,0,0),3)
+    #cv2.imshow("contoursFirstPass", transformedFrame)
     if len(contoursSecondPass) > 0:
         contoursSorted = sorted(contoursSecondPass, key=cv2.contourArea, reverse=True)
         #print("len")
@@ -225,6 +223,8 @@ def findNameContour(transformedFrame):
                 frameWithoutNameBox = cv2.threshold(frameWithoutNameBox, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
                 #cv2.imshow("aa", thresholdFrame)
                 contoursOfOptions = findTestCircles(frameWithoutNameBox)
+                #cv2.drawContours(frameWithoutNameBox, contoursOfOptions, -1, (255,0,0),3)
+                #cv2.imshow("bubbleContours",frameWithoutNameBox)
                 if contoursOfOptions is not None:
                     if len(contoursOfOptions) == 9:
                         questionsFullySorted = sortAndGradeAnswers(contoursOfOptions,frameWithoutNameBoxColor, frameWithoutNameBoxColorCopy)
@@ -247,6 +247,7 @@ def frameScan():
         greyFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         blurFrame = cv2.GaussianBlur(greyFrame,(5,5),0)
         edgesFrame = cv2.Canny(blurFrame, 75,200)
+
 
         #Contour treatment
         contoursFirstPass = cv2.findContours(edgesFrame.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
