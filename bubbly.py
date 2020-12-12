@@ -20,6 +20,7 @@ questionsPerRow = None
 listOfStudents = []
 currentStudent = ""
 averageForCurrentStudent = 0
+studentImageForDisplay = None
 
 answersFrame = None
 currentCorrectAnswers = None
@@ -111,6 +112,7 @@ def truncate(number, decimals=0):
     return math.trunc(number * factor) / factor
 
 def load_student_image():
+    global studentImageForDisplay
     pathForStudent = "StudentPictures/" + currentStudent + ".jpg"
     studentImg = cv2.imread(pathForStudent, cv2.IMREAD_UNCHANGED)
     #cv2.imshow("stu",studentImg)
@@ -118,20 +120,32 @@ def load_student_image():
     height = 100
     dim = (width, height)
     resizedImg = cv2.resize(studentImg, dim, interpolation = cv2.INTER_AREA)
-    cv2.imshow("emma", resizedImg)
+    studentImageForDisplay = resizedImg
+    #cv2.imshow("emma", resizedImg)
+
+def display_student_image():
+    print(answersFrame.shape)
+    x_offset=y_offset=10
+    answersFrame[y_offset:y_offset+studentImageForDisplay.shape[0], x_offset:x_offset+studentImageForDisplay.shape[1]] = studentImageForDisplay
+    cv2.destroyWindow("Test results")
+    cv2.imshow("yea mon", answersFrame)
+
+
 
 def showExamInformation(correctAnswers, finalFrame):
     global answersFrame
-    finalScore = correctAnswers/len(answers)
+    finalScore = correctAnswers/len(answers)*100
     testSheetHeight, testSheetWidth, testSheetChannel = finalFrame.shape
     cv2.putText(finalFrame, "Final score: " + "{:.2f}%".format(finalScore), (20,int(testSheetHeight)-100),
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
     if currentStudent != "":
-        cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (int(testSheetWidth/5)-30, 30),
+        cv2.putText(finalFrame, "Student: " + currentStudent + " Average: " + "{:.2f}".format(averageForCurrentStudent), (int(testSheetWidth/5)+30, 30),
         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2, bottomLeftOrigin=False)
         load_student_image()
+        display_student_image()
+    else:
+        cv2.imshow("Test results", finalFrame)
     answersFrame = finalFrame
-    cv2.imshow("Test results", finalFrame)
 
 
 def findNameContour(transformedFrame):
