@@ -28,16 +28,18 @@ currentCorrectAnswers = None
 
 keepScanning = True
 
+
 #primero sort vertical y luego horizontal, luego se splittea en los grupos
 #equivalentes al número de preguntas por fila
 def sort_and_grade_answers(contoursOfAnswers, referenceFrame, originalFrame):
+    print("Grading")
     global currentCorrectAnswers
     questionsSortedVertical = contours.sort_contours(contoursOfAnswers, method="top-to-bottom")[0]
     correctAnswers = 0
     originalFrameForMask = cv2.cvtColor(referenceFrame, cv2.COLOR_BGR2GRAY)
     originalFrameForMask = cv2.threshold(originalFrameForMask, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-    for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), 3)):
-        questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + 3])[0]
+    for(q, i) in enumerate(np.arange(0, len(questionsSortedVertical), questionsPerRow)):
+        questionsSortedHorizontal = contours.sort_contours(questionsSortedVertical[i:i + questionsPerRow])[0]
         filledIn = None
         contoursFilled = []
         contourForIteration = None
@@ -81,12 +83,13 @@ def find_test_circles(threshFrame):
 
 
 def get_test_details(filename):
+    global questionsPerRow
     testFile = open(filename, "r")
     testData = testFile.read()
     stringWithData = testData.split()
     testDataMapped = map(int, stringWithData)
     listOfMappedData = list(testDataMapped)
-    questionsPerRow = listOfMappedData[0]
+    questionsPerRow = len(listOfMappedData)-1
     for i in range(0,len(listOfMappedData)-1):
         answers[i]=listOfMappedData[i+1]
     print("Test answers loaded")
@@ -196,7 +199,8 @@ def find_name_contour(transformedFrame):
                 frameWithoutNameBox = cv2.threshold(frameWithoutNameBox, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
                 contoursOfOptions = find_test_circles(frameWithoutNameBox)
                 if contoursOfOptions is not None:
-                    if len(contoursOfOptions) == 9:
+                    print(len(answers)*questionsPerRow)
+                    if len(contoursOfOptions) == len(answers)*questionsPerRow:
                         questionsFullySorted = sort_and_grade_answers(contoursOfOptions,frameWithoutNameBoxColor, frameWithoutNameBoxColorCopy)
 
 
